@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 import logging
+import re
 
 from homeassistant.components.text import TextEntity
 from homeassistant.config_entries import ConfigEntry
@@ -19,6 +20,7 @@ _LOGGER = logging.getLogger(__name__)
 
 PANEL_WIDTH = 20
 PANEL_HEIGHT = 5
+_HEX_RE = re.compile(r"^#?[0-9a-fA-F]{6}$")
 
 
 async def async_setup_entry(
@@ -27,9 +29,9 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     data = hass.data[DOMAIN][entry.entry_id]
-    async_add_entities(
-        [YeelightLiteTextEntity(data["tcp"], data["color"], data["bg"], data["font_size"], entry)]
-    )
+    display = YeelightLiteTextEntity(data["tcp"], data["color"], data["bg"], data["font_size"], entry)
+    color = YeelightLiteColorEntity(display, data["color"], entry)
+    async_add_entities([display, color])
 
 
 def _hex_to_rgb(hex_color: str) -> tuple[int, int, int]:
@@ -54,7 +56,7 @@ def _push_text(tcp: CubeTCP, text: str, color_hex: str, bg_hex: str, font_size: 
 
 
 class YeelightLiteTextEntity(TextEntity):
-    """A text input entity — whatever you type is rendered on the panel."""
+    """Text input — whatever you type is rendered on the panel."""
 
     _attr_name = "Display Text"
     _attr_native_min = 0
@@ -62,14 +64,7 @@ class YeelightLiteTextEntity(TextEntity):
     _attr_native_value = ""
     _attr_should_poll = False
 
-    def __init__(
-        self,
-        tcp: CubeTCP,
-        color: str,
-        bg: str,
-        font_size: str,
-        entry: ConfigEntry,
-    ) -> None:
+    def __init__(self, tcp: CubeTCP, color: str, bg: str, font_size: str, entry: ConfigEntry) -> None:
         self._tcp = tcp
         self._color = color
         self._bg = bg
@@ -85,9 +80,43 @@ class YeelightLiteTextEntity(TextEntity):
     async def async_set_value(self, value: str) -> None:
         self._attr_native_value = value
         self.async_write_ha_state()
+        await self._redraw()
+
+    async def _redraw(self) -> None:
         try:
             await self.hass.async_add_executor_job(
-                _push_text, self._tcp, value, self._color, self._bg, self._font_size
+                _push_text, self._tcp, self._attr_native_value, self._color, self._bg, self._font_size
             )
         except Exception as exc:  # noqa: BLE001
             _LOGGER.error("Failed to push text to Cube Lite: %s", exc)
+
+
+class YeelightLiteColorEntity(TextEntity):
+    """Color input — enter a hex color (e.g. #ff0000) to change the text color live."""
+
+    _attr_name = "Text Color"
+    _attr_native_min = 4   # #rgb shortest valid
+    _attr_native_max = 7   # #rrggbb
+    _attr_should_poll = False
+    _attr_pattern = "^#[0-9a-fA-F]{6}$"
+
+    def __init__(self, display: YeelightLiteTextEntity, color: str, entry: ConfigEntry) -> None:
+        self._display = display
+        self._attr_native_value = color
+        self._attr_unique_id = f"{entry.entry_id}_color"
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, entry.entry_id)},
+            name="Yeelight Cube Lite",
+            manufacturer="Yeelight",
+            model="Cube Lite",
+        )
+
+    async def async_set_value(self, value: str) -> None:
+        if not _HEX_RE.match(value):
+            _LOGGER.warning("Invalid hex color ignored: %r", value)
+            return
+        color = value if value.startswith("#") else f"#{value}"
+        self._attr_native_value = color
+        self.async_write_ha_state()
+        self._display._color = color
+        await self._display._redraw()
