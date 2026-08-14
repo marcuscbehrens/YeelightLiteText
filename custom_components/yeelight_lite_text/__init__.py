@@ -6,7 +6,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_PORT, Platform
 from homeassistant.core import HomeAssistant
 
-from .const import CONF_BG, CONF_COLOR, DOMAIN
+from .const import CONF_BG, CONF_COLOR, CONF_FONT_SIZE, DEFAULT_FONT_SIZE, DOMAIN
 from .tcp import CubeTCP
 
 PLATFORMS = [Platform.TEXT]
@@ -20,6 +20,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "tcp": tcp,
         "color": entry.data.get(CONF_COLOR, "#ffffff"),
         "bg": entry.data.get(CONF_BG, "#000000"),
+        "font_size": entry.data.get(CONF_FONT_SIZE, DEFAULT_FONT_SIZE),
     }
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True

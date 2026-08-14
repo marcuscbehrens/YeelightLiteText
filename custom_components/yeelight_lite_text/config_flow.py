@@ -9,7 +9,16 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.const import CONF_HOST, CONF_PORT
 
-from .const import DEFAULT_BG, DEFAULT_COLOR, DEFAULT_PORT, DOMAIN, CONF_COLOR, CONF_BG
+from .const import (
+    CONF_BG,
+    CONF_COLOR,
+    CONF_FONT_SIZE,
+    DEFAULT_BG,
+    DEFAULT_COLOR,
+    DEFAULT_FONT_SIZE,
+    DEFAULT_PORT,
+    DOMAIN,
+)
 
 STEP_SCHEMA = vol.Schema(
     {
@@ -17,6 +26,7 @@ STEP_SCHEMA = vol.Schema(
         vol.Required(CONF_PORT, default=DEFAULT_PORT): int,
         vol.Required(CONF_COLOR, default=DEFAULT_COLOR): str,
         vol.Required(CONF_BG, default=DEFAULT_BG): str,
+        vol.Required(CONF_FONT_SIZE, default=DEFAULT_FONT_SIZE): vol.In(["4x5", "3x5"]),
     }
 )
 
@@ -26,9 +36,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     VERSION = 1
 
-    async def async_step_user(
-        self, user_input: dict[str, Any] | None = None
-    ):
+    async def async_step_user(self, user_input: dict[str, Any] | None = None):
         errors: dict[str, str] = {}
         if user_input is not None:
             host = user_input[CONF_HOST]

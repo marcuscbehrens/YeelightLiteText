@@ -28,7 +28,7 @@ async def async_setup_entry(
 ) -> None:
     data = hass.data[DOMAIN][entry.entry_id]
     async_add_entities(
-        [YeelightLiteTextEntity(data["tcp"], data["color"], data["bg"], entry)]
+        [YeelightLiteTextEntity(data["tcp"], data["color"], data["bg"], data["font_size"], entry)]
     )
 
 
@@ -43,10 +43,10 @@ def _encode_frame(pixels: list[tuple[int, int, int]]) -> str:
     )
 
 
-def _push_text(tcp: CubeTCP, text: str, color_hex: str, bg_hex: str) -> None:
+def _push_text(tcp: CubeTCP, text: str, color_hex: str, bg_hex: str, font_size: str) -> None:
     color = _hex_to_rgb(color_hex)
     bg = _hex_to_rgb(bg_hex)
-    columns = text_to_columns(text)
+    columns = text_to_columns(text, font_size)
     pixels = render_frame(columns, offset=0, width=PANEL_WIDTH, height=PANEL_HEIGHT, color=color, bg=bg)
     frame = _encode_frame(pixels)
     tcp.send("activate_fx_mode", [{"mode": "direct"}])
@@ -67,11 +67,13 @@ class YeelightLiteTextEntity(TextEntity):
         tcp: CubeTCP,
         color: str,
         bg: str,
+        font_size: str,
         entry: ConfigEntry,
     ) -> None:
         self._tcp = tcp
         self._color = color
         self._bg = bg
+        self._font_size = font_size
         self._attr_unique_id = f"{entry.entry_id}_text"
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, entry.entry_id)},
@@ -85,7 +87,7 @@ class YeelightLiteTextEntity(TextEntity):
         self.async_write_ha_state()
         try:
             await self.hass.async_add_executor_job(
-                _push_text, self._tcp, value, self._color, self._bg
+                _push_text, self._tcp, value, self._color, self._bg, self._font_size
             )
         except Exception as exc:  # noqa: BLE001
             _LOGGER.error("Failed to push text to Cube Lite: %s", exc)

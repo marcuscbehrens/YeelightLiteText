@@ -4,11 +4,23 @@ A Home Assistant custom integration that renders text on the **Yeelight Cube Lit
 
 ## How it works
 
-Type text into a HA text entity → the integration sends `activate_fx_mode` + `update_leds` commands directly to the device over TCP, rendering the text using a built-in 4×5 bitmap font.
+Type text into a HA text entity → the integration sends `activate_fx_mode` + `update_leds` commands directly to the device over TCP, rendering the text using a built-in bitmap font.
+
+## Prerequisites
+
+1. **Enable LAN control** in the Yeelight app: open the device → Settings → LAN Control → toggle on
+2. **Close the Yeelight app** after enabling LAN control — leaving it open causes connection conflicts with Home Assistant
 
 ## Supported characters
 
 A–Z, 0–9, space, `!`, `?`, `-`, `.`, `:`
+
+## Font sizes
+
+| Size | Width | Best for |
+|---|---|---|
+| `4x5` | 4 px wide | Letters — more readable |
+| `3x5` | 3 px wide | Numbers — fits more characters (up to 5 on screen) |
 
 ## Installation
 
@@ -32,6 +44,7 @@ Copy `custom_components/yeelight_lite_text/` into your `config/custom_components
 | Port | TCP port (default: `55443`) |
 | Text color | Hex color for the text, e.g. `#ffffff` |
 | Background color | Hex color for the background, e.g. `#000000` |
+| Font size | `4x5` (default) or `3x5` |
 
 ## Usage
 
@@ -50,5 +63,5 @@ Text wider than 20 columns is clipped at the right edge.
 ## Requirements
 
 - Home Assistant 2024.4.0+
-- Yeelight Cube Lite reachable on the local network
+- Yeelight Cube Lite reachable on the local network with LAN control enabled
 - No Python package dependencies

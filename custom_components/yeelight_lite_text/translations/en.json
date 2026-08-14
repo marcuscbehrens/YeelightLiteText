@@ -3,12 +3,13 @@
     "step": {
       "user": {
         "title": "Yeelight Cube Lite Text",
-        "description": "Enter the connection details for your Cube Lite panel.",
+        "description": "Enter the connection details for your Cube Lite panel.\n\n**Before adding:** Make sure LAN control is enabled in the Yeelight app (Device settings → LAN Control), then close the Yeelight app to avoid connection conflicts.",
         "data": {
           "host": "IP Address",
           "port": "Port",
           "color": "Text color (hex, e.g. #ffffff)",
-          "bg_color": "Background color (hex, e.g. #000000)"
+          "bg_color": "Background color (hex, e.g. #000000)",
+          "font_size": "Font size"
         }
       }
     },
