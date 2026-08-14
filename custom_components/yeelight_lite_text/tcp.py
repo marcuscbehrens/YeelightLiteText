@@ -61,6 +61,10 @@ class CubeTCP:
     def _connect(self) -> socket.socket:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(_TIMEOUT)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+        sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPIDLE, 10)   # start probing after 10s idle
+        sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPINTVL, 5)   # probe every 5s
+        sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_KEEPCNT, 3)     # drop after 3 failed probes
         sock.connect((self._ip, self._port))
         _LOGGER.debug("Connected to %s:%s", self._ip, self._port)
         return sock
