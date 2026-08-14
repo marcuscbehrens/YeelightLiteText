@@ -141,7 +141,7 @@ def render_frame(
     Columns beyond the end of the text are filled with ``bg``.
     """
     pixels: list[tuple[int, int, int]] = []
-    for row in range(height):
+    for row in range(height - 1, -1, -1):  # row 0 of font = bottom of panel
         for col in range(width):
             src = offset + col
             if 0 <= src < len(columns) and columns[src][row]:
