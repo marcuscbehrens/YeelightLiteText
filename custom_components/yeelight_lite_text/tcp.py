@@ -8,7 +8,8 @@ import socket
 import threading
 
 _LOGGER = logging.getLogger(__name__)
-_TIMEOUT = 5
+_TIMEOUT = 5       # connection timeout
+_RECV_TIMEOUT = 0.3  # response read timeout — device often sends nothing for update_leds
 
 
 class CubeTCP:
@@ -38,7 +39,13 @@ class CubeTCP:
                     if self._sock is None:
                         self._sock = self._connect()
                     self._sock.sendall(payload)
-                    self._sock.recv(4096)
+                    self._sock.settimeout(_RECV_TIMEOUT)
+                    try:
+                        self._sock.recv(4096)
+                    except socket.timeout:
+                        pass  # no response is normal for update_leds
+                    finally:
+                        self._sock.settimeout(_TIMEOUT)
                     return
                 except Exception as exc:  # noqa: BLE001
                     _LOGGER.debug(
